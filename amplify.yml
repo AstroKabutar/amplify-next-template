@@ -9,6 +9,8 @@ frontend:
   phases:
     build:
       commands:
+        # Console env vars are not visible to the SSR runtime; write what the server needs.
+        - env | grep -E '^DB_' >> .env.production
         - npm run build
   artifacts:
     baseDirectory: .next
