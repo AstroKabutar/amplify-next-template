@@ -16,7 +16,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <span style={{ position: "fixed", top: 8, left: 12, color: "white" }}>
+          dev
+        </span>
+        {children}
+      </body>
     </html>
   );
 }
