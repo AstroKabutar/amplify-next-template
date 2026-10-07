@@ -18,7 +18,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <span style={{ position: "fixed", top: 8, left: 12, color: "white" }}>
-          dev
+          feature y
         </span>
         {children}
       </body>
