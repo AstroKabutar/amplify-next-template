@@ -1,52 +1,72 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { generateClient } from "aws-amplify/data";
-import type { Schema } from "@/amplify/data/resource";
-import "./../app/app.css";
-import { Amplify } from "aws-amplify";
-import outputs from "@/amplify_outputs.json";
-import "@aws-amplify/ui-react/styles.css";
+import { useState } from "react";
 
-Amplify.configure(outputs);
+type Row = { expression: string; result: string; created_at: string };
 
-const client = generateClient<Schema>();
+export default function Calculator() {
+  const [a, setA] = useState("");
+  const [op, setOp] = useState("+");
+  const [b, setB] = useState("");
+  const [result, setResult] = useState("");
+  const [history, setHistory] = useState<Row[] | null>(null);
+  const [error, setError] = useState("");
 
-export default function App() {
-  const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
-
-  function listTodos() {
-    client.models.Todo.observeQuery().subscribe({
-      next: (data) => setTodos([...data.items]),
-    });
+  async function call(init?: RequestInit) {
+    const res = await fetch("/api/calculations", init);
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error);
+    return body;
   }
 
-  useEffect(() => {
-    listTodos();
-  }, []);
+  async function calculate() {
+    setError("");
+    try {
+      const body = await call({
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ a: Number(a), op, b: Number(b) }),
+      });
+      setResult(`${body.expression} = ${body.result}`);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
 
-  function createTodo() {
-    client.models.Todo.create({
-      content: window.prompt("Todo content"),
-    });
+  async function showHistory() {
+    setError("");
+    try {
+      setHistory((await call()).rows);
+    } catch (e) {
+      setError((e as Error).message);
+    }
   }
 
   return (
-    <main>
-      <h1>My todos</h1>
-      <button onClick={createTodo}>+ new</button>
-      <ul>
-        {todos.map((todo) => (
-          <li key={todo.id}>{todo.content}</li>
-        ))}
-      </ul>
-      <div>
-        🥳 App successfully hosted. Try creating a new todo.
-        <br />
-        <a href="https://docs.amplify.aws/nextjs/start/quickstart/nextjs-app-router-client-components/">
-          Review next steps of this tutorial.
-        </a>
+    <main style={{ color: "white", gap: 12 }}>
+      <h1>Calculator</h1>
+      <div style={{ display: "flex", gap: 8 }}>
+        <input type="number" value={a} onChange={(e) => setA(e.target.value)} />
+        <select value={op} onChange={(e) => setOp(e.target.value)}>
+          {["+", "-", "*", "/"].map((o) => (
+            <option key={o}>{o}</option>
+          ))}
+        </select>
+        <input type="number" value={b} onChange={(e) => setB(e.target.value)} />
+        <button onClick={calculate}>=</button>
       </div>
+      {result && <p>{result}</p>}
+      <button onClick={showHistory}>History</button>
+      {error && <p style={{ color: "tomato" }}>{error}</p>}
+      {history && (
+        <ul>
+          {history.map((r, i) => (
+            <li key={i}>
+              {r.expression} = {r.result}
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }
