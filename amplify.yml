@@ -11,7 +11,7 @@ frontend:
       commands:
         - npx ampx generate outputs --branch $AWS_BRANCH --app-id $AWS_APP_ID
         # Console env vars are not visible to the SSR runtime; write what the server needs.
-        - env | grep -E '^DB_' >> .env.production
+        - env | grep -E '^DB_' | grep -v '^DB_LAMBDA_NAME=' >> .env.production
         - echo "DB_LAMBDA_NAME=$(node -p "require('./amplify_outputs.json').custom.dbBridgeFunctionName")" >> .env.production
         - npm run build
   artifacts:
